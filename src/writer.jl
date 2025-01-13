@@ -658,6 +658,10 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     render(io, mime, node, node.children, page, doc; prenewline, kwargs...)
     println(io)
 end
+# Linebreaks
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, ::MarkdownAST.LineBreak, page, doc; prenewline = true, kwargs...)
+    println(io, "<br>")
+end
 # Plain text
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, text::MarkdownAST.Text, page, doc; kwargs...)
     print(io, escapehtml(text.text))
@@ -750,6 +754,7 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
         end
         category = "tip"
     end
+
     println(io, "\n::: $(category) $(title)")
     render(io, mime, node, node.children, page, doc; kwargs...)
     println(io, "\n:::")
@@ -784,11 +789,21 @@ function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Nod
     for item in node.children
         render(iob, mime, item, item.children, page, doc; prenewline = false, kwargs...)
         eachline = split(String(take!(iob)), '\n')
-        eachline[2:end] .= "  " .* eachline[2:end]
+        eachline[2:end] .= "    " .* eachline[2:end]
+        if !isempty(eachline[end]) && all(isspace, eachline[end])
+            pop!(eachline)
+        end
         print(io, bullet())
         println.((io,), eachline)
     end
 end
+
+function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, list::MarkdownAST.Item, page, doc; kwargs...)
+    for item in node.children
+        render(iob, mime, item, item.children, page, doc; prenewline = false, kwargs...)
+    end
+end
+
 # Tables
 function render(io::IO, mime::MIME"text/plain", node::Documenter.MarkdownAST.Node, table::MarkdownAST.TableCell, page, doc; kwargs...)
     println("Encountered table cell!")
