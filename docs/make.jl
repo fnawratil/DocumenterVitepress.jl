@@ -23,7 +23,8 @@ bib = CitationBibliography(
     joinpath(@__DIR__, "src", "refs.bib");
     style=:numeric  # default
 )
-
+# dev local
+try run(`pkill -f vitepress`) catch end # [!code error]
 
 makedocs(; 
     sitename = "DocumenterVitepress", 
@@ -49,7 +50,8 @@ makedocs(;
             "Updating to DocumenterVitepress" => "documenter_to_vitepress_docs_example.md",
             "DocumenterCitations integration" => "citations.md",
             "CSS Styling" => "style_css.md",
-
+            "Authors' badge" => "author_badge.md",
+            "GitHub Icon with Stars" => "repo_stars.md",
         ],
         "Developers' documentation" => [
             "The rendering process" => "render_pipeline.md",

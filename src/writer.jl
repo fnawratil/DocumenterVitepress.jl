@@ -142,10 +142,29 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
-
-    # from `vitepress_config.jl`
-    modify_config_file(doc, settings, deploy_decision)
-
+    # copy vue components
+    source_components = joinpath(dirname(@__DIR__), "template/src/components")
+    destination_dir = joinpath(builddir, settings.md_output_path, "components")
+    # Ensure the destination directory exists
+    mkpath(destination_dir)
+    for item in readdir(source_components)
+        src = joinpath(source_components, item)
+        dest = joinpath(destination_dir, item)
+        if !isfile(dest) && !isdir(dest)
+            try
+                if isdir(src)
+                    cp(src, dest; force=true)
+                else
+                    cp(src, dest; force=true)
+                end
+                println("Copied: $dest")
+            catch e
+                println("Error copying $src to $dest: $e")
+            end
+        else
+            println("Skipping: $dest (already exists)")
+        end
+    end
     # Documenter.jl wants assets in `assets/`, but Vitepress likes them in `public/`,
     # so we rename the folder.
     if isdir(joinpath(sourcedir, "assets")) && !isdir(joinpath(sourcedir, "public"))
@@ -172,7 +191,10 @@ function render(doc::Documenter.Document, settings::MarkdownVitepress=MarkdownVi
             end
         end
     end
-    # Main.@infiltrate
+     # from `vitepress_config.jl`
+    # This needs to be run after favicons and logos are moved to the public subfolder
+    modify_config_file(doc, settings, deploy_decision)
+
     # Iterate over the pages, render each page separately
     for (src, page) in doc.blueprint.pages
         # This is where you can operate on a per-page level.
